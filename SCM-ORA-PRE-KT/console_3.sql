@@ -1,0 +1,87 @@
+select * from RPT_MDS_MATERIAL_GAP_DETAIL;
+
+
+select * from MID_MDS_MRP;
+
+
+
+SELECT STD_PART_WEEK week, STD_PW_DESC week_desc
+FROM IN_MDS_SOM_TIME_MASTER
+WHERE TRUNC(sysdate, 'IW') + 28 <= to_date(to_char(PW_START_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+  AND LAST_DAY(ADD_MONTHS(SYSDATE, 3)) >= to_date(to_char(PW_END_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD')
+ORDER BY STD_WEEK ASC;
+
+
+WITH AvaCommonData AS (SELECT MRP.SUPPLYITEM,
+                              SUPPLYSEQNUM,
+                              NVL(INV.PLANT, 'NA')    AS FACTORY_SAP,
+                              CASE
+                                  WHEN TRIM(NVL(MRP.PARENTLOC, '')) IS NOT NULL THEN MRP.PARENTLOC
+                                  ELSE MRP.DMDLOC END AS FACTORY_ATP,
+                              SUPPLYAVAILDATE         AS REPORT_DATE
+                       FROM MID_MDS_MRP MRP
+                                JOIN IN_MDS_KEY_ITEM_M ITEM ON ITEM.MATERIAL_NO_ORIG = MRP.SUPPLYITEM
+                                LEFT JOIN MID_MDS_INVENTORY INV ON MRP.SUPPLYSEQNUM = INV.SEQNUM
+                       WHERE ITEM.STATUS = 1)
+select *
+from AvaCommonData a
+         join IN_MDS_FACTORY_MATERIAL b on
+              a.FACTORY_SAP
+              = b.FACTORY_NO and a.SUPPLYITEM = b.MATERIAL_NO ;
+
+
+SELECT
+  REGEXP_SUBSTR('5500&5520&5570', '[^&]+', 1, LEVEL) AS split_value
+FROM dual
+CONNECT BY LEVEL <= LENGTH(REGEXP_REPLACE('5500&5520&5570', '[^&]', '')) + 1;
+
+
+select * from IN_MDS_FACTORY_MATERIAL
+
+
+
+WITH AvaCommonData AS (
+    SELECT MRP.SUPPLYITEM,
+           SUPPLYSEQNUM,
+           NVL(INV.PLANT, 'NA') AS FACTORY_SAP,
+           CASE
+               WHEN TRIM(NVL(MRP.PARENTLOC, '')) IS NOT NULL THEN MRP.PARENTLOC
+               ELSE MRP.DMDLOC END AS FACTORY_ATP,
+           SUPPLYAVAILDATE AS REPORT_DATE
+    FROM MID_MDS_MRP MRP
+    JOIN IN_MDS_KEY_ITEM_M ITEM ON ITEM.MATERIAL_NO_ORIG = MRP.SUPPLYITEM
+    LEFT JOIN MID_MDS_INVENTORY INV ON MRP.SUPPLYSEQNUM = INV.SEQNUM
+    WHERE ITEM.STATUS = 1
+),
+-- 拆分FACTORY_SAP字段
+SplitFactory AS (
+    SELECT
+        a.*,
+        REGEXP_SUBSTR(a.FACTORY_SAP, '[^&]+', 1, LEVEL) AS SPLIT_FACTORY
+    FROM AvaCommonData a
+    CONNECT BY
+        LEVEL <= LENGTH(REGEXP_REPLACE(a.FACTORY_SAP, '[^&]', '')) + 1
+        AND PRIOR a.SUPPLYITEM = a.SUPPLYITEM
+        AND PRIOR a.SUPPLYSEQNUM = a.SUPPLYSEQNUM
+        AND PRIOR SYS_GUID() IS NOT NULL
+)
+select  *from SplitFactory
+-- 最终关联查询
+SELECT
+    s.SUPPLYITEM,
+    s.SUPPLYSEQNUM,
+    s.FACTORY_SAP AS ORIGINAL_FACTORIES,
+    s.SPLIT_FACTORY AS ACTUAL_FACTORY,
+    s.FACTORY_ATP,
+    s.REPORT_DATE,
+    b.*
+FROM SplitFactory s
+JOIN IN_MDS_FACTORY_MATERIAL b ON
+    s.SPLIT_FACTORY = b.FACTORY_NO
+    AND s.SUPPLYITEM = b.MATERIAL_NO;
+
+select SUM(QTY) from IN_MDS_SRM_INVENTORY where ITEM_CODE='92014-000778' and SITE_CODE='5500' and vmi_type='S';
+
+select SUM(QTY) from IN_MDS_SRM_INVENTORY where ITEM_CODE='92014-000934_A' and SITE_CODE='5500' and vmi_type='S';
+
+SELECT * FROM IN_MDS_FACTORY_MATERIAL ;

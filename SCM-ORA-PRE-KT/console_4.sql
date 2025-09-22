@@ -1,0 +1,8 @@
+select * from RPT_MDS_MATERIAL_GAP_DETAIL_ATTRIBUTE t where ATTRIBUTE_TYPE='WEEK'
+and VERSION=(select max(VERSION) from RPT_MDS_MATERIAL_GAP_DETAIL_ATTRIBUTE) order by ATTRIBUTE_VALUE;
+
+
+select TRUNC(sysdate, 'IW') from dual;
+
+
+select * from RPT_MDS_MATERIAL_GAP_DETAIL;
