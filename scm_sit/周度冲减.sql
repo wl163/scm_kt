@@ -40,3 +40,7 @@ where pws.enabled_offset = 'Y'
 select * from dp_po_so_open_cbu t
 where t.delivery_qty <> 0
 and etd_demand_date >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY);
+
+
+
+

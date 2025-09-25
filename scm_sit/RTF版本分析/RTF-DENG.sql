@@ -22,8 +22,8 @@ select
         szocr.bom_life_cycle,
         szocr.bom_status,
         pc.product_categ,
-        sph.qty,
-        sph.closed_qty,
+        sph.qty as 总量,
+        sph.closed_qty ,
 		sph.open_qty,
     	mimm.whole_in_out,
      	'' as sku,
@@ -34,7 +34,7 @@ select
       	ifnull(adjust_promise_date,ifnull(first_promise_date,promise_date)) as demandDate,
 		sph.version_no
 from
-	sp_order_header_weekly_snapshot sph
+     sp_order_header_weekly_snapshot  sph
 	left join scm_market_org smo on sph.country_code = smo.country_code and sph.brand_type = smo.brand_name
 	left join sp_factory_config sfc on sfc.factory_no = sph.demand_factory
 	left join sp_zcode_optional_config_relation szocr on sph.bom_code =  szocr.in_out_zcode
@@ -48,7 +48,7 @@ from
             SELECT distinct product_small_categ_name, product_categ
             FROM sp_product_categ
         ) pc ON item.product_small_categ_name = pc.product_small_categ_name
-/*where 1=1
+where 1=1
 	and sph.order_no in (
 	SELECT
 		orgnum
@@ -57,11 +57,12 @@ from
 	WHERE
 		dmd_type = 'ODF'
 		AND orgnum IS NOT NULL
-        )*/
--- 	and STR_TO_DATE(SUBSTRING(spheader.version_no, 1, 8), '%Y%m%d') >
--- 	#{pwStartDate})
--- 	and STR_TO_DATE(SUBSTRING(spheader.version_no, 1, 8), '%Y%m%d') <
--- 	#{pwEndDate}
+        )
+AND yearweek(left(sph.version_no,8)) =yearweek(left('20250925KPOP01',8))
+/*	and STR_TO_DATE(SUBSTRING(spheader.version_no, 1, 8), '%Y%m%d') >
+	#{pwStartDate})
+	and STR_TO_DATE(SUBSTRING(spheader.version_no, 1, 8), '%Y%m%d') <
+	#{pwEndDate}*/
 union all
     select
     'ODF' as demandType,
@@ -115,7 +116,7 @@ from
             SELECT distinct product_small_categ_name, product_categ
             FROM sp_product_categ
         ) pc ON item.product_small_categ_name = pc.product_small_categ_name
-/*where
+where
 	spi.order_no in (
 	SELECT
 		orgnum
@@ -125,7 +126,8 @@ from
 		dmd_type = 'ODF'
 		AND orgnum IS NOT NULL
         )
-	and STR_TO_DATE(SUBSTRING(spitem.version_no, 1, 8), '%Y%m%d') >
+AND yearweek(left(spi.version_no,8)) =yearweek(left('20250925KPOP01',8))
+/*	and STR_TO_DATE(SUBSTRING(spitem.version_no, 1, 8), '%Y%m%d') >
 	#{pwStartDate})
 	and STR_TO_DATE(SUBSTRING(spitem.version_no, 1, 8), '%Y%m%d') <
 	#{pwEndDate};*/

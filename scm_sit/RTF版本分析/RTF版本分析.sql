@@ -1,9 +1,13 @@
 /****************** RTF版本分析 ****************** /
 
 /*版本号 取值校验*/
-select distinct concat(version_no,'终版') from sop_rtf_detail_upload where rtf_version_no like '%SYSTEM%'
-union
-select distinct concat(version_no,'初版') from sop_first_version_rtf_detail;
+with v_no as (
+    select distinct concat(version_no,'终版') as version_no,creation_date  from sop_rtf_detail_upload where rtf_version_no like '%SYSTEM%'
+    union
+    select distinct concat(version_no,'初版') as version_no,creation_date from sop_first_version_rtf_detail
+)
+select version_no,creation_date from v_no order by creation_date desc ;
+
 
 /*销售组织取值*/
 SELECT bu_name,bg_name,rbc_name,region_name,country_name_cn FROM scm_market_org;
@@ -89,11 +93,16 @@ select * from cfg_parameter where param_name ='IMPORT_PUBILSH_PERMISSION' and at
 select * from cfg_parameter where param_name = 'SWITCH_RTF_HISTORY_IMPORT' ;
 
 select * from sop_rtf_detail_import order by creation_date desc;
-select * from sop_rtf_detail_upload order by last_update_date desc;
+select distinct version_no from sop_rtf_detail_upload order by last_update_date desc;
+select distinct version_no from sop_rtf_detail_upload where version_no='20250932KTOP01';
+
+select * from sop_first_version_rtf_detail order by creation_date desc ;
+
+# update sop_rtf_detail_upload set version_no='20250925KTOP01' where version_no='20250132KTOP01';
 
 select count(1) from sop_first_version_rtf_detail_wide where version_no='20250916KTOP01';
 
-select * from version_master order by creation_date desc;
+select * from version_master order by creation_date desc limit 4;
 
 /*1、[sp_turn_prodt_result]取最大发布版本到[sp_turn_prodt_result_for_rtf];
 2、清洗[sp_turn_prodt_result_for_rtf].<relation_id>不在[sop_his_mid_mds_fcstorder].<orgnum>记录；*/
@@ -108,6 +117,7 @@ select t.relation_id,t.abnormal_type_code, t.* from sp_turn_prodt_result t where
 
 select * from sop_his_mid_mds_fcstorder order by creation_date desc ;
 
+select * from sp_order_item_weekly_esp_snapshot ;
 
 /*3、[sp_order_header_weekly_esp_snapshot]写入[sp_order_header_for_rtf]
 	并清洗[sp_order_header_for_rtf].<order_no>不在[SOP_HIS_MID_MDS_FCSTORDER].<ORGNUM>中且DMD_TYPE='ODF'的记录*/
@@ -117,8 +127,30 @@ where exists(select 1 from SOP_HIS_MID_MDS_FCSTORDER mmf where DMD_TYPE = 'ODF' 
 
 
 
-select * from sop_first_version_rtf_detail order by creation_date desc ;
+select distinct version_no from sop_first_version_rtf_detail order by creation_date desc ;
 select * from sop_rtf_detail_upload order by creation_date desc ;
+
+
+select * from sop_first_version_rtf_detail where version_no = '20250924KTOP01' ;
+select * from sop_first_version_rtf_detail where version_no = '20250917KTOP01' ;
+
+
+select  * from version_master order by last_update_date desc limit 3 ;
+
+select factory_no,factory_desc from sp_factory_config ;
+select distinct bulk_require_goods_mode from sop_first_version_rtf_detail where version_no = '20250925KTOP01'
+union
+select distinct bulk_require_goods_mode from sop_rtf_detail_upload where version_no = '20250925KTOP01' ;
+
+
+SELECT  yearweek(left('20250925KPOP01',8))  ;
+SELECT  yearweek(left(version_no,8)) FROM sp_order_header_weekly_snapshot ORDER BY last_update_date DESC limit 1;
+SELECT DISTINCT version_no FROM sp_order_item_weekly_snapshot ORDER BY last_update_date DESC ;
+
+SELECT creation_date,t.* FROM sp_order_item_weekly_snapshot t where version_no = '202504301642' ;
+
+
+SELECT * FROM sp_order_header_weekly_snapshot ORDER BY creation_date DESC ;
 
 
 
